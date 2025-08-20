@@ -1,0 +1,133 @@
+{
+    "name": "Workflow",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "lead",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "0da8d309-0310-4c2d-99d2-55c3408a1790",
+        "name": "Webhook",
+        "webhookId": "eaf755ab-c4e2-4a5f-b43b-4310075f8366"
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\nconst body = item.body ?? item;\nconst name = body?.name;\nconst email = body?.email;\n\nconst hasError = !name || !email;\nconst payload = hasError\n  ? { ok: false, error: 'Name and email are required fields.' }\n  : {\n      ok: true,\n      name: String(name).trim(),\n      email: String(email).trim().toLowerCase(),\n      timestamp: new Date().toISOString(),\n      status: 'lead_received',\n    };\n\nreturn [{ json: payload }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          208,
+          0
+        ],
+        "id": "c65a98ce-1ccb-4530-b11d-840a25f8e2a2",
+        "name": "Code"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://webhook.site/eb95a38b-e2d0-47d1-84d7-6ddaf61ab28b",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"name\": \"{{$json.name}}\",\n  \"email\": \"{{$json.email}}\",\n  \"received_at\": \"{{$json.timestamp}}\"\n}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          608,
+          0
+        ],
+        "id": "65fde9ec-458e-4a16-8995-820210a69fd1",
+        "name": "HTTP Request",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "mode": "chooseBranch"
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          416,
+          0
+        ],
+        "id": "c2352d58-766b-4ea5-9917-6b0f2ec10f24",
+        "name": "Merge"
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Code",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": true,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "4fc07dbc-0387-48c2-a5b0-64571adcb95c",
+    "meta": {
+      "instanceId": "3beb6f96e46c7274668d39f0d1bcfc061d933de66c63c353ee1b0d531fc4c0b1"
+    },
+    "id": "x9FFlw2yxi05bVim",
+    "tags": []
+  }

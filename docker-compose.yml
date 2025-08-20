@@ -1,0 +1,70 @@
+services:
+  challenge_web:
+    build:
+      context: .
+    container_name: challenge_web
+    env_file:
+      - .env
+    depends_on:
+      challenge_db:
+        condition: service_healthy
+      challenge_n8n:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./challenge_web:/challenge_web
+      - ./challenge_db/data/web/static:/data/web/static
+      - ./challenge_db/data/web/media:/data/web/media
+    command: commands.sh
+    environment:
+      - WEB_DATA_DIR=/data/web
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+
+  challenge_db:
+    image: postgres:15-alpine
+    container_name: challenge_db
+    volumes:
+      - ./challenge_db/data/postgres:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+
+  challenge_n8n:
+    image: n8nio/n8n:1.106.3   
+    container_name: challenge_n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./challenge_db/data/n8n:/home/node/.n8n
+    env_file:
+    - .env
+    environment:
+    - N8N_RUNNERS_ENABLED=true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5678 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
