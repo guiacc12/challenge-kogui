@@ -16,7 +16,7 @@ Um ambiente simples e completo para coletar leads: um formulário em Django grav
 
 1) Clonar o repositório
 ```bash
-git clone <repository-url>
+git clone <https://github.com/guiacc12/challenge-kogui>
 cd challenge-kogui
 ```
 
